@@ -101,3 +101,28 @@ def all_players():
         rows.append({"player": player, "owner": owner, "points": p, "delta": delta})
     rows.sort(key=lambda x: x["points"], reverse=True)
     return rows
+
+
+def append_team_history(entry: dict):
+    """Add a {date, Elaina, Michael, Sreesha, Jeff} entry to team_history."""
+    d = load()
+    history = d.setdefault("team_history", [])
+    # Don't duplicate the same date
+    if not history or history[-1]["date"] != entry["date"]:
+        history.append(entry)
+        d["team_history"] = history
+        save(d)
+
+
+def get_team_history() -> list:
+    """
+    Return merged history: seeded data from draft.py + live snapshots from store.json.
+    Deduplicates by date, live data wins over seed.
+    """
+    from draft import TEAM_HISTORY
+    d = load()
+    live = {e["date"]: e for e in d.get("team_history", [])}
+    seed = {e["date"]: e for e in TEAM_HISTORY}
+    # Merge: seed first, then overwrite with live
+    merged = {**seed, **live}
+    return sorted(merged.values(), key=lambda x: x["date"])

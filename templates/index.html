@@ -425,6 +425,7 @@
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('standings', this)">Standings</button>
   <button class="tab-btn" onclick="switchTab('draft-order', this)">Draft Order</button>
+  <button class="tab-btn" onclick="switchTab('history', this)">History</button>
 </div>
 
 <!-- ROSTERS -->
@@ -563,6 +564,19 @@
 </div>
 </div><!-- end tab-draft-order -->
 
+<!-- HISTORY TAB -->
+<div id="tab-history" class="tab-pane">
+<div class="content">
+  <div class="section-header">
+    <div class="section-label">Team Points — Season History</div>
+  </div>
+  <div style="position:relative; height:420px; background:var(--bg2); border:1px solid var(--border); padding:1.5rem;">
+    <canvas id="historyChart"></canvas>
+  </div>
+</div>
+</div><!-- end tab-history -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
   // ── Tabs ────────────────────────────────────────────────────────
   function switchTab(name, btn) {
@@ -570,6 +584,85 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     btn.classList.add('active');
+    if (name === 'history') renderChart();
+  }
+
+  // ── History Chart ────────────────────────────────────────────────
+  const historyData = {{ team_history | tojson }};
+  const COLORS = {
+    Elaina:  '#E86090',
+    Michael: '#40C0A0',
+    Sreesha: '#A080F0',
+    Jeff:    '#F09040',
+  };
+  let chartInstance = null;
+
+  function renderChart() {
+    if (chartInstance) return; // only render once
+    const labels = historyData.map(d => d.date);
+    const participants = ['Elaina', 'Michael', 'Sreesha', 'Jeff'];
+    const datasets = participants.map(name => ({
+      label: name,
+      data: historyData.map(d => d[name] || 0),
+      borderColor: COLORS[name],
+      backgroundColor: COLORS[name] + '18',
+      borderWidth: 2,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      fill: false,
+    }));
+
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#8A9BAB',
+              font: { family: 'DM Mono', size: 11 },
+              boxWidth: 12,
+            }
+          },
+          tooltip: {
+            backgroundColor: '#0D1117',
+            borderColor: '#243040',
+            borderWidth: 1,
+            titleColor: '#E8EDF2',
+            bodyColor: '#8A9BAB',
+            titleFont: { family: 'DM Mono', size: 11 },
+            bodyFont: { family: 'DM Mono', size: 11 },
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} pts`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: '#5A6A7A',
+              font: { family: 'DM Mono', size: 10 },
+              maxTicksLimit: 12,
+              maxRotation: 0,
+            },
+            grid: { color: '#1C2430' },
+          },
+          y: {
+            ticks: {
+              color: '#5A6A7A',
+              font: { family: 'DM Mono', size: 10 },
+              callback: v => v.toLocaleString(),
+            },
+            grid: { color: '#1C2430' },
+          }
+        }
+      }
+    });
   }
 
   // ── Filter ──────────────────────────────────────────────────────

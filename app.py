@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template
 import store
-from draft import DRAFT, DRAFT_ORDER
+from draft import DRAFT, DRAFT_ORDER, TEAM_HISTORY
 from scraper import scrape_race_points
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -23,10 +23,38 @@ def do_scrape():
     return pts, errors
 
 
+def take_eod_snapshot():
+    """Save current team totals as an end-of-day history entry."""
+    lb = store.leaderboard()
+    try:
+        import zoneinfo
+        et = zoneinfo.ZoneInfo("America/New_York")
+        date_str = datetime.now(et).strftime("%Y-%m-%d")
+    except Exception:
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+    entry = {"date": date_str}
+    for row in lb:
+        entry[row["name"]] = row["total"]
+    store.append_team_history(entry)
+    logger.info("EOD snapshot saved for %s", date_str)
+
+
 def scheduler():
     time.sleep(3)
+    last_snapshot_date = None
     while True:
         do_scrape()
+        # Take EOD snapshot once per day at/after midnight ET
+        try:
+            import zoneinfo
+            et = zoneinfo.ZoneInfo("America/New_York")
+            now_et = datetime.now(et)
+        except Exception:
+            now_et = datetime.utcnow()
+        today = now_et.strftime("%Y-%m-%d")
+        if last_snapshot_date != today and now_et.hour >= 23:
+            take_eod_snapshot()
+            last_snapshot_date = today
         next_run = datetime.now() + timedelta(hours=1)
         logger.info("Next scrape at %s", next_run.strftime("%Y-%m-%d %H:%M"))
         time.sleep(3600)
@@ -40,6 +68,7 @@ def index():
         leaderboard=store.leaderboard(),
         players=store.all_players(),
         draft_order=DRAFT_ORDER,
+        team_history=store.get_team_history(),
         last_updated=d.get("last_updated"),
         scrape_errors=d.get("scrape_errors", []),
     )

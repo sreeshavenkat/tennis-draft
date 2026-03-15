@@ -1,4 +1,3 @@
-# Draft rosters — order = pick order (pick 1 first, pick 15 last)
 DRAFT = {
     "Elaina": [
         "Sabalenka, Aryna", "Gauff, Cori", "Shelton, Ben", "Djokovic, Novak",
@@ -26,49 +25,6 @@ DRAFT = {
     ],
 }
 
-# Draft order: snake draft
-# Round 1: Sreesha, Jeff, Elaina, Michael
-# Round 2: Michael, Elaina, Jeff, Sreesha (snake)
-# etc.
-DRAFT_ORDER = []
-participants = ["Sreesha", "Jeff", "Elaina", "Michael"]
-picks = {p: list(DRAFT[p]) for p in participants}
-
-for round_num in range(15):
-    order = participants if round_num % 2 == 0 else list(reversed(participants))
-    for p in order:
-        if picks[p]:
-            DRAFT_ORDER.append({
-                "overall_pick": len(DRAFT_ORDER) + 1,
-                "round": round_num + 1,
-                "owner": p,
-                "player": picks[p].pop(0),
-            })
-
-SEED_POINTS = {
-    "Sabalenka, Aryna": 2450, "Gauff, Cori": 1045, "Shelton, Ben": 1000,
-    "Djokovic, Novak": 1400, "Paul, Tommy": 565, "Zheng, Qinwen": 130,
-    "Rublev, Andrey": 610, "Tauson, Clara": 617, "Shnaider, Diana": 470,
-    "Mensik, Jakub": 845, "Norrie, Cameron": 400, "Michelsen, Alex": 310,
-    "Tsitsipas, Stefanos": 335, "Eala, Alex": 591, "Sakkari, Maria": 616,
-    "Swiatek, Iga": 1010, "Rybakina, Elena": 3093, "De Minaur, Alex": 1035,
-    "Andreeva, Mirra": 1193, "Medvedev, Daniil": 1650, "Osaka, Naomi": 282,
-    "Ruud, Casper": 405, "Mboko, Victoria": 1712, "Muchova, Karolina": 1555,
-    "Davidovich Fokina, Alejandro": 450, "Cobolli, Flavio": 680,
-    "Cerundolo, Francisco": 650, "Krejcikova, Barbora": 166,
-    "Joint, Maya": 248, "Munar, Jaume": 200,
-    "Sinner, Jannik": 1550, "Pegula, Jessica": 2190, "Fritz, Taylor": 665,
-    "Paolini, Jasmine": 497, "Draper, Jack": 250, "Keys, Madison": 521,
-    "Musetti, Lorenzo": 575, "Navarro, Emma": 261, "Khachanov, Karen": 310,
-    "Lehecka, Jiri": 245, "Svitolina, Elina": 2190, "Ostapenko, Jelena": 597,
-    "Tiafoe, Frances": 655, "Samsonova, Liudmila": 257, "Rinderknech, Arthur": 200,
-    "Alcaraz, Carlos": 2900, "Anisimova, Amanda": 1010, "Auger-Aliassime, Felix": 915,
-    "Bencic, Belinda": 864, "Fils, Arthur": 580, "Bublik, Alexander": 750,
-    "Noskova, Linda": 710, "Alexandrova, Ekaterina": 426, "Tien, Learner": 725,
-    "Fonseca, Joao": 160, "Fernandez, Leylah": 255, "Hurkacz, Hubert": 325,
-    "Dimitrov, Grigor": 65, "Valentova, Tereza": 323, "Vondrousova, Marketa": 61,
-}
-
 PLAYER_TOUR = {
     "Sinner, Jannik": "atp", "Alcaraz, Carlos": "atp", "Djokovic, Novak": "atp",
     "Shelton, Ben": "atp", "Paul, Tommy": "atp", "Medvedev, Daniil": "atp",
@@ -92,3 +48,92 @@ PLAYER_TOUR = {
     "Osaka, Naomi": "wta", "Krejcikova, Barbora": "wta", "Vondrousova, Marketa": "wta",
     "Valentova, Tereza": "wta", "Joint, Maya": "wta",
 }
+
+# Snake draft order: Sreesha, Jeff, Elaina, Michael (round 1), then reverses
+DRAFT_ORDER = []
+_participants = ["Sreesha", "Jeff", "Elaina", "Michael"]
+_picks = {p: list(DRAFT[p]) for p in _participants}
+for _round in range(15):
+    _order = _participants if _round % 2 == 0 else list(reversed(_participants))
+    for _p in _order:
+        if _picks[_p]:
+            DRAFT_ORDER.append({
+                "overall_pick": len(DRAFT_ORDER) + 1,
+                "round": _round + 1,
+                "owner": _p,
+                "player": _picks[_p].pop(0),
+            })
+
+# Historical daily team totals (Elaina, Michael, Sreesha, Jeff)
+TEAM_HISTORY = [
+    {"date": "2026-01-05", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-06", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-07", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-08", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-09", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-10", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-11", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-12", "Elaina": 30,    "Michael": 348,   "Sreesha": 0,     "Jeff": 152},
+    {"date": "2026-01-13", "Elaina": 1224,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-14", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-15", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-16", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-17", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-18", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-19", "Elaina": 1324,  "Michael": 1474,  "Sreesha": 985,   "Jeff": 1425},
+    {"date": "2026-01-20", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-21", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-22", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-23", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-24", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-25", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-26", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-27", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-28", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-29", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-30", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-01-31", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-02-01", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-02-02", "Elaina": 1971,  "Michael": 2558,  "Sreesha": 1203,  "Jeff": 1572},
+    {"date": "2026-02-03", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-04", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-05", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-06", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-07", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-08", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-09", "Elaina": 6401,  "Michael": 7018,  "Sreesha": 4843,  "Jeff": 5022},
+    {"date": "2026-02-10", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-11", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-12", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-13", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-14", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-15", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-16", "Elaina": 6704,  "Michael": 7019,  "Sreesha": 5012,  "Jeff": 5707},
+    {"date": "2026-02-17", "Elaina": 8449,  "Michael": 10434, "Sreesha": 6547,  "Jeff": 6869},
+    {"date": "2026-02-18", "Elaina": 8554,  "Michael": 10434, "Sreesha": 6547,  "Jeff": 6919},
+    {"date": "2026-02-19", "Elaina": 9014,  "Michael": 10629, "Sreesha": 6887,  "Jeff": 7164},
+    {"date": "2026-02-20", "Elaina": 9389,  "Michael": 10679, "Sreesha": 7262,  "Jeff": 7589},
+    {"date": "2026-02-21", "Elaina": 9464,  "Michael": 10729, "Sreesha": 7832,  "Jeff": 7899},
+    {"date": "2026-02-22", "Elaina": 9529,  "Michael": 10839, "Sreesha": 8182,  "Jeff": 8069},
+    {"date": "2026-02-23", "Elaina": 9529,  "Michael": 10839, "Sreesha": 8182,  "Jeff": 8069},
+    {"date": "2026-02-24", "Elaina": 9529,  "Michael": 10839, "Sreesha": 8232,  "Jeff": 8119},
+    {"date": "2026-02-25", "Elaina": 9629,  "Michael": 10989, "Sreesha": 8382,  "Jeff": 8169},
+    {"date": "2026-02-26", "Elaina": 9729,  "Michael": 11089, "Sreesha": 8534,  "Jeff": 8219},
+    {"date": "2026-02-27", "Elaina": 9829,  "Michael": 11339, "Sreesha": 8791,  "Jeff": 8319},
+    {"date": "2026-02-28", "Elaina": 9829,  "Michael": 11649, "Sreesha": 8791,  "Jeff": 8319},
+    {"date": "2026-03-01", "Elaina": 9829,  "Michael": 11819, "Sreesha": 9008,  "Jeff": 8319},
+    {"date": "2026-03-02", "Elaina": 9829,  "Michael": 11989, "Sreesha": 9008,  "Jeff": 8319},
+    {"date": "2026-03-03", "Elaina": 9829,  "Michael": 11989, "Sreesha": 9008,  "Jeff": 8319},
+    {"date": "2026-03-04", "Elaina": 9829,  "Michael": 11989, "Sreesha": 9008,  "Jeff": 8319},
+    {"date": "2026-03-05", "Elaina": 9829,  "Michael": 11989, "Sreesha": 9008,  "Jeff": 8349},
+    {"date": "2026-03-06", "Elaina": 9839,  "Michael": 11989, "Sreesha": 9008,  "Jeff": 8399},
+    {"date": "2026-03-07", "Elaina": 10194, "Michael": 12309, "Sreesha": 9283,  "Jeff": 8634},
+    {"date": "2026-03-08", "Elaina": 10474, "Michael": 12539, "Sreesha": 9538,  "Jeff": 8804},
+    {"date": "2026-03-09", "Elaina": 10604, "Michael": 12684, "Sreesha": 9788,  "Jeff": 9144},
+    {"date": "2026-03-10", "Elaina": 10754, "Michael": 12899, "Sreesha": 9948,  "Jeff": 9249},
+    {"date": "2026-03-11", "Elaina": 10849, "Michael": 13154, "Sreesha": 10048, "Jeff": 9499},
+    {"date": "2026-03-12", "Elaina": 10949, "Michael": 13349, "Sreesha": 10243, "Jeff": 9694},
+    {"date": "2026-03-13", "Elaina": 11124, "Michael": 13819, "Sreesha": 10713, "Jeff": 9869},
+    {"date": "2026-03-14", "Elaina": 11384, "Michael": 14079, "Sreesha": 10713, "Jeff": 10069},
+    {"date": "2026-03-15", "Elaina": 11384, "Michael": 14329, "Sreesha": 10963, "Jeff": 10069},
+]
