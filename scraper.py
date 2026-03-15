@@ -62,8 +62,34 @@ def scrape_race_points(all_players: list) -> tuple:
 
             rows = page.query_selector_all("table tbody tr")
             logger.info("[ATP] Found %d rows", len(rows))
-            atp_pts, matched = _parse_rows(rows, wanted)
-            points.update(atp_pts)
+
+            # Extract all data in one JS call instead of row-by-row — much faster
+            raw = page.evaluate("""
+                () => {
+                    const rows = document.querySelectorAll('table tbody tr');
+                    const results = [];
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 6) {
+                            const name = cells[2].innerText.trim();
+                            const pts  = cells[5].innerText.trim().replace(/,/g, '');
+                            if (name && /^\\d+$/.test(pts)) {
+                                results.push([name, parseInt(pts)]);
+                            }
+                        }
+                    });
+                    return results;
+                }
+            """)
+            logger.info("[ATP] Extracted %d candidates via JS", len(raw))
+
+            matched = 0
+            for name_raw, pts in raw:
+                m = _match(name_raw, wanted)
+                if m and m not in points:
+                    points[m] = pts
+                    matched += 1
+            atp_pts = points  # already merged above
             logger.info("[ATP] Matched %d players", matched)
 
             if not matched:
