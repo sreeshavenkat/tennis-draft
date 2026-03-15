@@ -1,11 +1,10 @@
 """
 ATP + WTA: try curl_cffi first (fast, no browser, ~1 sec).
 If ATP is Cloudflare-blocked, fall back to Playwright.
-WTA already works reliably via curl_cffi.
+ATP and WTA players are matched ONLY against their respective tour pages.
 """
 
 import logging
-import re
 import unicodedata
 
 logger = logging.getLogger(__name__)
@@ -26,13 +25,17 @@ _STEALTH_JS = """
 def scrape_race_points(all_players: list) -> tuple:
     from curl_cffi import requests as curl_requests
     from lxml import html as lxml_html
+    from draft import PLAYER_TOUR
 
-    wanted = set(all_players)
+    # Split by tour so WTA players never match against ATP page and vice versa
+    atp_wanted = {p for p in all_players if PLAYER_TOUR.get(p) == "atp"}
+    wta_wanted = {p for p in all_players if PLAYER_TOUR.get(p) == "wta"}
+
     points = {}
     active_tournaments = {}
     errors = []
 
-    # ── ATP: curl_cffi first, Playwright fallback ─────────────────────────────
+    # ── ATP ───────────────────────────────────────────────────────────────────
     logger.info("[ATP] Fetching via curl_cffi…")
     try:
         session = curl_requests.Session(impersonate="chrome")
@@ -42,21 +45,21 @@ def scrape_race_points(all_players: list) -> tuple:
         rows = tree.xpath("//table/tbody/tr")
         logger.info("[ATP] lxml found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, wanted, points, active_tournaments)
-        logger.info("[ATP] curl_cffi matched %d players", matched)
+        matched = _parse_lxml_rows(rows, atp_wanted, points, active_tournaments)
+        logger.info("[ATP] matched %d players", matched)
 
         if not matched:
             logger.warning("[ATP] curl_cffi got 0 — falling back to Playwright")
-            atp_pts, atp_err = _scrape_playwright(ATP_URL, "ATP", wanted)
+            atp_pts, atp_err = _scrape_playwright(ATP_URL, "ATP", atp_wanted)
             points.update(atp_pts)
             errors.extend(atp_err)
     except Exception as e:
         errors.append(f"ATP curl_cffi failed ({e}), trying Playwright…")
-        atp_pts, atp_err = _scrape_playwright(ATP_URL, "ATP", wanted)
+        atp_pts, atp_err = _scrape_playwright(ATP_URL, "ATP", atp_wanted)
         points.update(atp_pts)
         errors.extend(atp_err)
 
-    # ── WTA: curl_cffi only ───────────────────────────────────────────────────
+    # ── WTA ───────────────────────────────────────────────────────────────────
     logger.info("[WTA] Fetching via curl_cffi…")
     try:
         session = curl_requests.Session(impersonate="chrome")
@@ -73,12 +76,12 @@ def scrape_race_points(all_players: list) -> tuple:
             rows = tree.xpath("//table/tbody/tr")
             logger.info("[WTA] retry found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, wanted, points, active_tournaments)
+        matched = _parse_lxml_rows(rows, wta_wanted, points, active_tournaments)
         logger.info("[WTA] matched %d players", matched)
     except Exception as e:
         errors.append(f"WTA error: {e}")
 
-    missing = wanted - set(points.keys())
+    missing = set(all_players) - set(points.keys())
     if missing:
         errors.append(f"Not found on Race pages: {', '.join(sorted(missing))}")
 
@@ -86,27 +89,21 @@ def scrape_race_points(all_players: list) -> tuple:
 
 
 def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict = None) -> int:
-    """Parse lxml rows, add matched players to points dict. Returns match count.
-    Also populates active_tournaments {player: tournament_name} if provided.
-    """
     matched = 0
     for row in rows:
         try:
             cells = row.xpath("./td")
             if len(cells) < 6:
                 continue
-
             name_raw = (cells[2].text_content() or "").strip()
             pts_raw  = (cells[5].text_content() or "").strip().replace(",", "").replace("\xa0", "")
             if not name_raw or not pts_raw.isdigit():
                 continue
-
             m = _match(name_raw, wanted)
             if m and m not in points:
                 points[m] = int(pts_raw)
                 matched += 1
-
-                # Active = col8 non-empty AND col9 empty (not lost)
+                # Active = col8 non-empty AND col9 empty
                 if active_tournaments is not None and len(cells) > 8:
                     col8 = cells[8].text_content().strip().replace("\xa0", " ").strip()
                     col9 = cells[9].text_content().strip() if len(cells) > 9 else ""
