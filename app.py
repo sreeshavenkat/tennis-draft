@@ -64,6 +64,7 @@ def scheduler():
 def index():
     d = store.load()
     players = store.all_players()
+    player_sparklines = {p["player"]: p.get("sparkline", []) for p in players}
     return render_template(
         "index.html",
         leaderboard=store.leaderboard(),
@@ -71,6 +72,8 @@ def index():
         draft_order=DRAFT_ORDER,
         team_history=store.get_team_history(),
         active_tournaments=d.get("active_tournaments", {}),
+        best_picks=store.best_picks(),
+        player_sparklines=player_sparklines,
         undrafted_atp=d.get("undrafted_atp", []),
         undrafted_wta=d.get("undrafted_wta", []),
         last_updated=d.get("last_updated"),

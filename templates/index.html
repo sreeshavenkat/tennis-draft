@@ -227,7 +227,7 @@
       font-size: 0.68rem; color: var(--muted); text-align: right;
     }
     .rp-name {
-      font-size: 0.8rem; color: var(--muted2);
+      font-size: 0.8rem; color: var(--chalk);
       white-space: nowrap;
     }
     .rp-bar-wrap {
@@ -236,7 +236,7 @@
     .rp-bar { height: 100%; transition: width .5s ease; }
     .rp-pts {
       font-family: 'DM Mono', monospace;
-      font-size: 0.72rem; color: var(--muted); text-align: right;
+      font-size: 0.72rem; color: var(--chalk); text-align: right;
     }
     .rp-pts.hi { color: var(--chalk); }
 
@@ -480,10 +480,17 @@
       </div>
       <div class="rcard-players">
         {% set sorted_players = entry.breakdown.items()|sort(attribute='1', reverse=True) %}
+        {% set best = best_picks.get(entry.name) %}
         {% for player, pts in sorted_players %}
         <div class="rp-row">
           <div class="rp-name">
             {{ player }}{{ tourn_badge(player) }}
+            {% if best and best.player == player %}
+              <span class="tourn-badge" style="margin-left:0.3rem">
+                <span style="color:var(--gold);font-size:0.65rem">⭐</span>
+                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Pick {{ best.overall_pick }} (Rd {{ best.round }}) · {{ "{:,}".format(best.points) }} pts vs {{ "{:,}".format(best.best_available_pts) }} pts ({{ best.best_available }})</span>
+              </span>
+            {% endif %}
           </div>
           <div class="rp-bar-wrap">
             <div class="rp-bar"
@@ -491,7 +498,7 @@
                         background:{{ color }};
                         opacity:0.6;"></div>
           </div>
-          <div class="rp-pts {% if pts > 500 %}hi{% endif %}">{{ "{:,}".format(pts) }}</div>
+          <div class="rp-pts hi">{{ "{:,}".format(pts) }}</div>
         </div>
         {% endfor %}
       </div>
@@ -585,7 +592,7 @@
           <div class="rp-bar-wrap">
             <div class="rp-bar" style="width:{{ [(pts / max_pts * 100), 100]|min }}%;background:{{ color }};opacity:0.6;"></div>
           </div>
-          <div class="rp-pts {% if pts > 500 %}hi{% endif %}">{{ "{:,}".format(pts) }}</div>
+          <div class="rp-pts hi">{{ "{:,}".format(pts) }}</div>
         </div>
         {% endfor %}
       </div>

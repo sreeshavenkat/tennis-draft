@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 ATP_URL = "https://live-tennis.eu/en/atp-race"
 WTA_URL = "https://live-tennis.eu/en/wta-race"
 
+# Players to exclude from undrafted/missed picks
+BLOCKLIST = {"Alexander Zverev"}
+
 _STEALTH_JS = """
 () => {
     Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -27,7 +30,6 @@ def scrape_race_points(all_players: list) -> tuple:
     from lxml import html as lxml_html
     from draft import PLAYER_TOUR
 
-    # Split by tour so WTA players never match against ATP page and vice versa
     atp_wanted = {p for p in all_players if PLAYER_TOUR.get(p) == "atp"}
     wta_wanted = {p for p in all_players if PLAYER_TOUR.get(p) == "wta"}
 
@@ -101,6 +103,11 @@ def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict =
             pts_raw  = (cells[5].text_content() or "").strip().replace(",", "").replace("\xa0", "")
             if not name_raw or not pts_raw.isdigit():
                 continue
+
+            # Skip blocklisted players
+            if any(_normalize(name_raw.lower()) == _normalize(b.lower()) for b in BLOCKLIST):
+                continue
+
             m = _match(name_raw, wanted)
             if m and m not in points:
                 points[m] = int(pts_raw)
@@ -112,7 +119,6 @@ def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict =
                     if col8 and not col9:
                         active_tournaments[m] = col8
             elif m is None and undrafted is not None and len(undrafted) < max_undrafted:
-                # Not in draft — capture as missed pick
                 pts = int(pts_raw)
                 if pts > 0:
                     undrafted.append({"player": name_raw, "points": pts})
