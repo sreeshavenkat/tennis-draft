@@ -434,7 +434,7 @@
     <div class="section-label">Rosters</div>
   </div>
 
-  {% set max_pts = players[0].points if players else 1 %}
+  {% set max_pts = players[0].points if players and players[0].points > 0 else 1 %}
 
   <div class="roster-grid">
     {% for entry in leaderboard %}
@@ -527,7 +527,7 @@
     <div class="section-label">Draft Order — Snake Draft (15 Rounds)</div>
   </div>
 
-  {% set max_pts = players[0].points if players else 1 %}
+  {% set max_pts = players[0].points if players and players[0].points > 0 else 1 %}
 
   <div class="roster-grid">
     {% for participant in ['Sreesha', 'Jeff', 'Elaina', 'Michael'] %}
