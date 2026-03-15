@@ -584,11 +584,20 @@
         </div>
       </div>
       <div class="rcard-players">
+        {% set best = best_picks.get(participant) %}
         {% for pick in draft_order if pick.owner == participant %}
         {% set pts = entry.breakdown[pick.player] if entry else 0 %}
         <div class="rp-row with-pick">
           <div class="rp-pick">{{ pick.overall_pick }}</div>
-          <div class="rp-name">{{ pick.player }}{{ tourn_badge(pick.player) }}</div>
+          <div class="rp-name">
+            {{ pick.player }}{{ tourn_badge(pick.player) }}
+            {% if best and best.player == pick.player %}
+              <span class="tourn-badge" style="margin-left:0.3rem">
+                <span style="color:var(--gold);font-size:0.65rem">⭐</span>
+                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Pick {{ best.overall_pick }} (Rd {{ best.round }}) · {{ "{:,}".format(best.points) }} pts vs {{ "{:,}".format(best.best_available_pts) }} pts ({{ best.best_available }})</span>
+              </span>
+            {% endif %}
+          </div>
           <div class="rp-bar-wrap">
             <div class="rp-bar" style="width:{{ [(pts / max_pts * 100), 100]|min }}%;background:{{ color }};opacity:0.6;"></div>
           </div>
