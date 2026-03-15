@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 import time
 from datetime import datetime, timedelta
@@ -71,4 +72,5 @@ def api_state():
 if __name__ == "__main__":
     store.init()
     threading.Thread(target=scheduler, daemon=True).start()
-    app.run(debug=False, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
