@@ -391,6 +391,7 @@
     <span class="tourn-badge"><span style="color:var(--green);font-size:0.65rem;margin-left:0.3rem">🎾</span><span class="tip">{{ clean }}</span></span>
   {% endif %}
 {% endmacro %}
+
 <nav>
   <div class="logo">Tennis <em>Draft</em> '26</div>
   <div class="nav-meta">
@@ -451,6 +452,7 @@
   <button class="tab-btn active" onclick="switchTab('standings', this)">Standings</button>
   <button class="tab-btn" onclick="switchTab('draft-order', this)">Draft Order</button>
   <button class="tab-btn" onclick="switchTab('history', this)">History</button>
+  <button class="tab-btn" onclick="switchTab('missed', this)">Missed Picks</button>
 </div>
 
 <!-- ROSTERS -->
@@ -604,6 +606,77 @@
   </div>
 </div>
 </div><!-- end tab-history -->
+
+<!-- MISSED PICKS TAB -->
+<div id="tab-missed" class="tab-pane">
+<div class="content">
+  <div class="section-header">
+    <div class="section-label">Missed Picks — Top 20 Undrafted Players</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+
+    <!-- ATP -->
+    <div>
+      <div class="section-label" style="margin-bottom:0.8rem">ATP</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Player</th>
+              <th class="num">Race Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if undrafted_atp %}
+              {% for p in undrafted_atp %}
+              <tr>
+                <td class="num" style="color:var(--muted)">{{ loop.index }}</td>
+                <td class="player-name">{{ p.player }}</td>
+                <td class="pts-cell">{{ "{:,}".format(p.points) }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;padding:1rem">Awaiting first scrape…</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WTA -->
+    <div>
+      <div class="section-label" style="margin-bottom:0.8rem">WTA</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Player</th>
+              <th class="num">Race Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if undrafted_wta %}
+              {% for p in undrafted_wta %}
+              <tr>
+                <td class="num" style="color:var(--muted)">{{ loop.index }}</td>
+                <td class="player-name">{{ p.player }}</td>
+                <td class="pts-cell">{{ "{:,}".format(p.points) }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;padding:1rem">Awaiting first scrape…</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div><!-- end tab-missed -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>

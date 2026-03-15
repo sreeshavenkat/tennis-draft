@@ -17,8 +17,8 @@ ALL_PLAYERS = [p for roster in DRAFT.values() for p in roster]
 
 def do_scrape():
     logger.info("Scraping Race points for %d players…", len(ALL_PLAYERS))
-    pts, active_tournaments, errors = scrape_race_points(ALL_PLAYERS)
-    store.apply_scrape(pts, active_tournaments, errors)
+    pts, active_tournaments, undrafted_atp, undrafted_wta, errors = scrape_race_points(ALL_PLAYERS)
+    store.apply_scrape(pts, active_tournaments, undrafted_atp, undrafted_wta, errors)
     logger.info("Done — updated %d players. Errors: %d", len(pts), len(errors))
     return pts, errors
 
@@ -63,13 +63,16 @@ def scheduler():
 @app.route("/")
 def index():
     d = store.load()
+    players = store.all_players()
     return render_template(
         "index.html",
         leaderboard=store.leaderboard(),
-        players=store.all_players(),
+        players=players,
         draft_order=DRAFT_ORDER,
         team_history=store.get_team_history(),
         active_tournaments=d.get("active_tournaments", {}),
+        undrafted_atp=d.get("undrafted_atp", []),
+        undrafted_wta=d.get("undrafted_wta", []),
         last_updated=d.get("last_updated"),
         scrape_errors=d.get("scrape_errors", []),
     )

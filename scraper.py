@@ -33,6 +33,8 @@ def scrape_race_points(all_players: list) -> tuple:
 
     points = {}
     active_tournaments = {}
+    undrafted_atp = []
+    undrafted_wta = []
     errors = []
 
     # ── ATP ───────────────────────────────────────────────────────────────────
@@ -45,7 +47,7 @@ def scrape_race_points(all_players: list) -> tuple:
         rows = tree.xpath("//table/tbody/tr")
         logger.info("[ATP] lxml found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, atp_wanted, points, active_tournaments)
+        matched = _parse_lxml_rows(rows, atp_wanted, points, active_tournaments, undrafted_atp)
         logger.info("[ATP] matched %d players", matched)
 
         if not matched:
@@ -76,7 +78,7 @@ def scrape_race_points(all_players: list) -> tuple:
             rows = tree.xpath("//table/tbody/tr")
             logger.info("[WTA] retry found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, wta_wanted, points, active_tournaments)
+        matched = _parse_lxml_rows(rows, wta_wanted, points, active_tournaments, undrafted_wta)
         logger.info("[WTA] matched %d players", matched)
     except Exception as e:
         errors.append(f"WTA error: {e}")
@@ -85,10 +87,10 @@ def scrape_race_points(all_players: list) -> tuple:
     if missing:
         errors.append(f"Not found on Race pages: {', '.join(sorted(missing))}")
 
-    return points, active_tournaments, errors
+    return points, active_tournaments, undrafted_atp, undrafted_wta, errors
 
 
-def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict = None) -> int:
+def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict = None, undrafted: list = None, max_undrafted: int = 20) -> int:
     matched = 0
     for row in rows:
         try:
@@ -109,6 +111,11 @@ def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict =
                     col9 = cells[9].text_content().strip() if len(cells) > 9 else ""
                     if col8 and not col9:
                         active_tournaments[m] = col8
+            elif m is None and undrafted is not None and len(undrafted) < max_undrafted:
+                # Not in draft — capture as missed pick
+                pts = int(pts_raw)
+                if pts > 0:
+                    undrafted.append({"player": name_raw, "points": pts})
         except Exception:
             continue
     return matched

@@ -57,7 +57,7 @@ def init():
         save(_defaults())
 
 
-def apply_scrape(new_points: dict, active_tournaments: dict, errors: list):
+def apply_scrape(new_points: dict, active_tournaments: dict, undrafted_atp: list, undrafted_wta: list, errors: list):
     d = load()
     now = _now_et()
     for player, pts in new_points.items():
@@ -68,7 +68,9 @@ def apply_scrape(new_points: dict, active_tournaments: dict, errors: list):
             d["history"][player] = hist[-200:]
     d["last_updated"] = now
     d["scrape_errors"] = errors
-    d["active_tournaments"] = active_tournaments  # {player: tournament_name}
+    d["active_tournaments"] = active_tournaments
+    d["undrafted_atp"] = undrafted_atp
+    d["undrafted_wta"] = undrafted_wta
     save(d)
 
 
