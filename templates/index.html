@@ -182,7 +182,7 @@
     }
     .rcard {
       background: var(--bg2); padding: 0;
-      position: relative; overflow: hidden;
+      position: relative;
       transition: background .15s;
     }
     .rcard:hover { background: var(--bg3); }
@@ -228,7 +228,7 @@
     }
     .rp-name {
       font-size: 0.8rem; color: var(--muted2);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .rp-bar-wrap {
       height: 2px; background: var(--border2); position: relative;
@@ -350,6 +350,25 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ── TOURNAMENT TOOLTIP ──────────────────────── */
+    .tourn-badge {
+      position: relative; display: inline-flex;
+      align-items: center; cursor: default;
+    }
+    .tourn-badge .tip {
+      visibility: hidden; opacity: 0;
+      position: absolute; bottom: calc(100% + 6px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg3); border: 1px solid var(--green);
+      color: var(--green);
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      white-space: nowrap; padding: 0.4rem 0.8rem;
+      pointer-events: none;
+      transition: opacity .15s;
+      z-index: 50;
+    }
+    .tourn-badge:hover .tip { visibility: visible; opacity: 1; }
+
     @media (max-width: 700px) {
       .podium { grid-template-columns: repeat(2, 1fr); }
       .hero-title { font-size: 2.5rem; }
@@ -365,7 +384,13 @@
   'Jeff':    'var(--jeff)'
 } %}
 
-<!-- NAV -->
+{% macro tourn_badge(player) %}
+  {% if active_tournaments.get(player) %}
+    {% set raw = active_tournaments[player] %}
+    {% set clean = raw.split('(')[0].strip() %}
+    <span class="tourn-badge"><span style="color:var(--green);font-size:0.65rem;margin-left:0.3rem">🎾</span><span class="tip">{{ clean }}</span></span>
+  {% endif %}
+{% endmacro %}
 <nav>
   <div class="logo">Tennis <em>Draft</em> '26</div>
   <div class="nav-meta">
@@ -455,7 +480,9 @@
         {% set sorted_players = entry.breakdown.items()|sort(attribute='1', reverse=True) %}
         {% for player, pts in sorted_players %}
         <div class="rp-row">
-          <div class="rp-name">{{ player }}</div>
+          <div class="rp-name">
+            {{ player }}{{ tourn_badge(player) }}
+          </div>
           <div class="rp-bar-wrap">
             <div class="rp-bar"
                  style="width:{{ [(pts / max_pts * 100), 100]|min }}%;
@@ -499,7 +526,9 @@
         <tr data-owner="{{ p.owner }}" data-player="{{ p.player }}"
             data-points="{{ p.points }}" data-rank="{{ loop.index }}">
           <td class="num" style="color:var(--muted)">{{ loop.index }}</td>
-          <td class="player-name">{{ p.player }}</td>
+          <td class="player-name">
+            {{ p.player }}{{ tourn_badge(p.player) }}
+          </td>
           <td>
             <span class="owner-badge badge-{{ p.owner }}">{{ p.owner }}</span>
           </td>
@@ -550,7 +579,7 @@
         {% set pts = entry.breakdown[pick.player] if entry else 0 %}
         <div class="rp-row with-pick">
           <div class="rp-pick">{{ pick.overall_pick }}</div>
-          <div class="rp-name">{{ pick.player }}</div>
+          <div class="rp-name">{{ pick.player }}{{ tourn_badge(pick.player) }}</div>
           <div class="rp-bar-wrap">
             <div class="rp-bar" style="width:{{ [(pts / max_pts * 100), 100]|min }}%;background:{{ color }};opacity:0.6;"></div>
           </div>

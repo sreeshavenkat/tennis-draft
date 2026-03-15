@@ -29,6 +29,7 @@ def scrape_race_points(all_players: list) -> tuple:
 
     wanted = set(all_players)
     points = {}
+    active_tournaments = {}
     errors = []
 
     # ── ATP: curl_cffi first, Playwright fallback ─────────────────────────────
@@ -41,7 +42,7 @@ def scrape_race_points(all_players: list) -> tuple:
         rows = tree.xpath("//table/tbody/tr")
         logger.info("[ATP] lxml found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, wanted, points)
+        matched = _parse_lxml_rows(rows, wanted, points, active_tournaments)
         logger.info("[ATP] curl_cffi matched %d players", matched)
 
         if not matched:
@@ -72,7 +73,7 @@ def scrape_race_points(all_players: list) -> tuple:
             rows = tree.xpath("//table/tbody/tr")
             logger.info("[WTA] retry found %d rows", len(rows))
 
-        matched = _parse_lxml_rows(rows, wanted, points)
+        matched = _parse_lxml_rows(rows, wanted, points, active_tournaments)
         logger.info("[WTA] matched %d players", matched)
     except Exception as e:
         errors.append(f"WTA error: {e}")
@@ -81,25 +82,36 @@ def scrape_race_points(all_players: list) -> tuple:
     if missing:
         errors.append(f"Not found on Race pages: {', '.join(sorted(missing))}")
 
-    return points, errors
+    return points, active_tournaments, errors
 
 
-def _parse_lxml_rows(rows, wanted: set, points: dict) -> int:
-    """Parse lxml rows and add matched players to points dict. Returns match count."""
+def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict = None) -> int:
+    """Parse lxml rows, add matched players to points dict. Returns match count.
+    Also populates active_tournaments {player: tournament_name} if provided.
+    """
     matched = 0
     for row in rows:
         try:
             cells = row.xpath("./td")
             if len(cells) < 6:
                 continue
+
             name_raw = (cells[2].text_content() or "").strip()
             pts_raw  = (cells[5].text_content() or "").strip().replace(",", "").replace("\xa0", "")
             if not name_raw or not pts_raw.isdigit():
                 continue
+
             m = _match(name_raw, wanted)
             if m and m not in points:
                 points[m] = int(pts_raw)
                 matched += 1
+
+                # Active = col8 non-empty AND col9 empty (not lost)
+                if active_tournaments is not None and len(cells) > 8:
+                    col8 = cells[8].text_content().strip().replace("\xa0", " ").strip()
+                    col9 = cells[9].text_content().strip() if len(cells) > 9 else ""
+                    if col8 and not col9:
+                        active_tournaments[m] = col8
         except Exception:
             continue
     return matched

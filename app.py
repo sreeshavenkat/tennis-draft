@@ -17,8 +17,8 @@ ALL_PLAYERS = [p for roster in DRAFT.values() for p in roster]
 
 def do_scrape():
     logger.info("Scraping Race points for %d players…", len(ALL_PLAYERS))
-    pts, errors = scrape_race_points(ALL_PLAYERS)
-    store.apply_scrape(pts, errors)
+    pts, active_tournaments, errors = scrape_race_points(ALL_PLAYERS)
+    store.apply_scrape(pts, active_tournaments, errors)
     logger.info("Done — updated %d players. Errors: %d", len(pts), len(errors))
     return pts, errors
 
@@ -69,6 +69,7 @@ def index():
         players=store.all_players(),
         draft_order=DRAFT_ORDER,
         team_history=store.get_team_history(),
+        active_tournaments=d.get("active_tournaments", {}),
         last_updated=d.get("last_updated"),
         scrape_errors=d.get("scrape_errors", []),
     )
@@ -98,8 +99,9 @@ def api_state():
     })
 
 
+store.init()
+threading.Thread(target=scheduler, daemon=True).start()
+
 if __name__ == "__main__":
-    store.init()
-    threading.Thread(target=scheduler, daemon=True).start()
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
