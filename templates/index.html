@@ -180,6 +180,13 @@
       border: 1px solid var(--border);
       margin-bottom: 3rem;
     }
+    .roster-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
     .rcard {
       background: var(--bg2); padding: 0;
       position: relative;
@@ -627,66 +634,65 @@
 <div id="tab-missed" class="tab-pane">
 <div class="content">
   <div class="section-header">
-    <div class="section-label">Missed Picks — Top 20 Undrafted Players</div>
+    <div class="section-label">Missed Picks — Top Undrafted Players</div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+  {% set missed_max = ([undrafted_atp[0].points if undrafted_atp else 0, undrafted_wta[0].points if undrafted_wta else 0] | max) or 1 %}
 
+  <div class="roster-grid-2">
     <!-- ATP -->
-    <div>
-      <div class="section-label" style="margin-bottom:0.8rem">ATP</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="num">#</th>
-              <th>Player</th>
-              <th class="num">Race Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if undrafted_atp %}
-              {% for p in undrafted_atp %}
-              <tr>
-                <td class="num" style="color:var(--muted)">{{ loop.index }}</td>
-                <td class="player-name">{{ p.player }}</td>
-                <td class="pts-cell">{{ "{:,}".format(p.points) }}</td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <tr><td colspan="3" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;padding:1rem">Awaiting first scrape…</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
+    <div class="rcard">
+      <div class="rcard-header">
+        <div class="rcard-left">
+          <div class="rcard-swatch" style="background:var(--blue);"></div>
+          <div class="rcard-name">ATP</div>
+        </div>
+      </div>
+      <div class="rcard-players">
+        {% if undrafted_atp %}
+          {% for p in undrafted_atp %}
+          <div class="rp-row">
+            <div class="rp-name" style="display:flex;gap:0.4rem;align-items:center;">
+              <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);width:1.2rem;text-align:right;flex-shrink:0">{{ loop.index }}</span>
+              <span>{{ p.player }}</span>
+            </div>
+            <div class="rp-bar-wrap">
+              <div class="rp-bar" style="width:{{ [(p.points / missed_max * 100), 100]|min }}%;background:var(--blue);opacity:0.6;"></div>
+            </div>
+            <div class="rp-pts hi">{{ "{:,}".format(p.points) }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding:1rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.75rem">Awaiting first scrape…</div>
+        {% endif %}
       </div>
     </div>
 
     <!-- WTA -->
-    <div>
-      <div class="section-label" style="margin-bottom:0.8rem">WTA</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="num">#</th>
-              <th>Player</th>
-              <th class="num">Race Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if undrafted_wta %}
-              {% for p in undrafted_wta %}
-              <tr>
-                <td class="num" style="color:var(--muted)">{{ loop.index }}</td>
-                <td class="player-name">{{ p.player }}</td>
-                <td class="pts-cell">{{ "{:,}".format(p.points) }}</td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <tr><td colspan="3" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;padding:1rem">Awaiting first scrape…</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
+    <div class="rcard">
+      <div class="rcard-header">
+        <div class="rcard-left">
+          <div class="rcard-swatch" style="background:var(--orange);"></div>
+          <div class="rcard-name">WTA</div>
+        </div>
+      </div>
+      <div class="rcard-players">
+        {% if undrafted_wta %}
+          {% for p in undrafted_wta %}
+          <div class="rp-row">
+            <div class="rp-name" style="display:flex;gap:0.4rem;align-items:center;">
+              <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);width:1.2rem;text-align:right;flex-shrink:0">{{ loop.index }}</span>
+              <span>{{ p.player }}</span>
+            </div>
+            <div class="rp-bar-wrap">
+              <div class="rp-bar" style="width:{{ [(p.points / missed_max * 100), 100]|min }}%;background:var(--orange);opacity:0.6;"></div>
+            </div>
+            <div class="rp-pts hi">{{ "{:,}".format(p.points) }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding:1rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.75rem">Awaiting first scrape…</div>
+        {% endif %}
       </div>
     </div>
 
