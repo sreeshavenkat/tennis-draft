@@ -98,53 +98,45 @@ def all_players():
 
 def best_picks() -> dict:
     """
-    Best pick = highest opportunity cost outperformance.
-    For each pick, compare the player's current points against the
-    best available player at that pick slot (i.e. the highest-scoring
-    player who was still undrafted at that point in the draft).
-    A positive value means you outperformed the best alternative.
+    Best pick = highest ratio of (player points / median points of all players
+    picked in the same round). A ratio of 2.0 means you scored twice the median
+    of your round — snake-aware and scale-independent.
     """
     d = load()
     pts = d["player_points"]
 
-    # Build set of all drafted players with their points
-    all_drafted = {pick["player"]: pts.get(pick["player"], 0) for pick in DRAFT_ORDER}
+    # Build round -> list of points for all 4 picks in that round
+    round_points = {}
+    for pick in DRAFT_ORDER:
+        p_pts = pts.get(pick["player"], 0)
+        round_points.setdefault(pick["round"], []).append(p_pts)
+
+    # Median per round
+    def median(lst):
+        s = sorted(lst)
+        n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+    round_median = {r: median(v) for r, v in round_points.items()}
 
     result = {}
-    already_picked = set()
-
     for pick in DRAFT_ORDER:
         p = pick["player"]
         owner = pick["owner"]
         player_pts = pts.get(p, 0)
-        already_picked.add(p)
-
         if player_pts == 0:
             continue
-
-        # Best available at this pick = highest scoring player NOT yet picked
-        # excluding the current player (they weren't available to themselves)
-        available = {
-            name: points for name, points in all_drafted.items()
-            if name not in already_picked
-        }
-        best_available_pts = max(available.values()) if available else 0
-
-        # Outperformance = how much better this pick is vs best remaining option
-        outperformance = player_pts - best_available_pts
-
-        if owner not in result or outperformance > result[owner]["outperformance"]:
-            best_available_name = max(available, key=available.get) if available else "—"
+        med = round_median.get(pick["round"], 1) or 1
+        ratio = player_pts / med
+        if owner not in result or ratio > result[owner]["ratio"] or (ratio == result[owner]["ratio"] and player_pts > result[owner]["points"]):
             result[owner] = {
                 "player": p,
                 "points": player_pts,
                 "round": pick["round"],
                 "overall_pick": pick["overall_pick"],
-                "outperformance": outperformance,
-                "best_available": best_available_name,
-                "best_available_pts": best_available_pts,
+                "ratio": ratio,
+                "round_median": int(med),
             }
-
     return result
 
 

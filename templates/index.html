@@ -495,7 +495,7 @@
             {% if best and best.player == player %}
               <span class="tourn-badge" style="margin-left:0.3rem">
                 <span style="color:var(--gold);font-size:0.65rem">⭐</span>
-                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Pick {{ best.overall_pick }} (Rd {{ best.round }}) · {{ "{:,}".format(best.points) }} pts vs {{ "{:,}".format(best.best_available_pts) }} pts ({{ best.best_available }})</span>
+                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Rd {{ best.round }} pick · {{ "{:.1f}".format(best.ratio) }}x round median ({{ "{:,}".format(best.round_median) }} pts)</span>
               </span>
             {% endif %}
           </div>
@@ -601,7 +601,7 @@
             {% if best and best.player == pick.player %}
               <span class="tourn-badge" style="margin-left:0.3rem">
                 <span style="color:var(--gold);font-size:0.65rem">⭐</span>
-                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Pick {{ best.overall_pick }} (Rd {{ best.round }}) · {{ "{:,}".format(best.points) }} pts vs {{ "{:,}".format(best.best_available_pts) }} pts ({{ best.best_available }})</span>
+                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Rd {{ best.round }} pick · {{ "{:.1f}".format(best.ratio) }}x round median ({{ "{:,}".format(best.round_median) }} pts)</span>
               </span>
             {% endif %}
           </div>
