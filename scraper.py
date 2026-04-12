@@ -5,6 +5,7 @@ ATP and WTA players are matched ONLY against their respective tour pages.
 """
 
 import logging
+import re
 import unicodedata
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,9 @@ WTA_URL = "https://live-tennis.eu/en/wta-race"
 
 # Players to exclude from undrafted/missed picks
 BLOCKLIST = {"Alexander Zverev"}
+
+# Substrings that indicate a non-player row (cut lines, qualification markers)
+_SKIP_SUBSTRINGS = {"qualification", "cut", "alternates", "alternate", "qualifier"}
 
 _STEALTH_JS = """
 () => {
@@ -92,6 +96,14 @@ def scrape_race_points(all_players: list) -> tuple:
     return points, active_tournaments, undrafted_atp, undrafted_wta, errors
 
 
+def _clean_name(name: str) -> str:
+    """Strip status symbols like ✗, ✓, ★ etc from player names."""
+    # Remove non-letter, non-space, non-comma, non-hyphen, non-apostrophe chars
+    cleaned = re.sub(r'[^\w\s,.\'\-]', '', name, flags=re.UNICODE).strip()
+    # Collapse multiple spaces
+    return re.sub(r'\s+', ' ', cleaned).strip()
+
+
 def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict = None, undrafted: list = None, max_undrafted: int = 20) -> int:
     matched = 0
     for row in rows:
@@ -104,11 +116,18 @@ def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict =
             if not name_raw or not pts_raw.isdigit():
                 continue
 
-            # Skip blocklisted players
-            if any(_normalize(name_raw.lower()) == _normalize(b.lower()) for b in BLOCKLIST):
+            # Skip non-player rows (qualification cuts etc)
+            if any(s in name_raw.lower() for s in _SKIP_SUBSTRINGS):
                 continue
 
-            m = _match(name_raw, wanted)
+            # Clean name (strip ✗ and other symbols)
+            name_clean = _clean_name(name_raw)
+
+            # Skip blocklisted players
+            if any(_normalize(name_clean.lower()) == _normalize(b.lower()) for b in BLOCKLIST):
+                continue
+
+            m = _match(name_clean, wanted)
             if m and m not in points:
                 points[m] = int(pts_raw)
                 matched += 1
@@ -121,7 +140,7 @@ def _parse_lxml_rows(rows, wanted: set, points: dict, active_tournaments: dict =
             elif m is None and undrafted is not None and len(undrafted) < max_undrafted:
                 pts = int(pts_raw)
                 if pts > 0:
-                    undrafted.append({"player": name_raw, "points": pts})
+                    undrafted.append({"player": name_clean, "points": pts})
         except Exception:
             continue
     return matched
@@ -171,7 +190,8 @@ def _scrape_playwright(url: str, label: str, wanted: set) -> tuple:
             """)
             logger.info("[%s] Playwright extracted %d rows", label, len(raw))
             for name_raw, pts in raw:
-                m = _match(name_raw, wanted)
+                name_clean = _clean_name(name_raw)
+                m = _match(name_clean, wanted)
                 if m and m not in points:
                     points[m] = pts
             logger.info("[%s] Playwright matched %d players", label, len(points))
@@ -215,6 +235,13 @@ def _match(name_raw, wanted):
         if "," in w:
             last, first = w.split(",", 1)
             if _normalize(f"{first.strip()} {last.strip()}".lower()) == nl: return w
+    # Multi-word last name matching (e.g. "Davidovich Fokina")
+    if len(parts) >= 3:
+        for w in wanted:
+            if "," in w:
+                last = w.split(",")[0].strip()
+                if _normalize(last.lower()) == _normalize(" ".join(parts[1:]).lower()):
+                    return w
     last_s = _normalize(parts[-1].lower()) if parts else ""
     if len(last_s) > 3:
         for w in wanted:
