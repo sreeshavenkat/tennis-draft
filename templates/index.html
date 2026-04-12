@@ -410,6 +410,26 @@
   {% endif %}
 {% endmacro %}
 
+{% macro best_badge(owner, player) %}
+  {% set best = best_picks.get(owner) %}
+  {% if best and best.player == player %}
+    <span class="tourn-badge" style="margin-left:0.3rem">
+      <span style="color:var(--gold);font-size:0.65rem">⭐</span>
+      <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Rd {{ best.round }} pick · {{ "{:.1f}".format(best.ratio) }}x round median ({{ "{:,}".format(best.round_median) }} pts)</span>
+    </span>
+  {% endif %}
+{% endmacro %}
+
+{% macro worst_badge(owner, player) %}
+  {% set worst = worst_picks.get(owner) %}
+  {% if worst and worst.player == player %}
+    <span class="tourn-badge" style="margin-left:0.3rem">
+      <span style="font-size:0.65rem">💩</span>
+      <span class="tip" style="border-color:var(--red);color:var(--red)">Worst value — Rd {{ worst.round }} pick · {{ "{:.2f}".format(worst.ratio) }}x round median ({{ "{:,}".format(worst.round_median) }} pts)</span>
+    </span>
+  {% endif %}
+{% endmacro %}
+
 <nav>
   <div class="logo">Tennis <em>Draft</em> '26</div>
   <div class="nav-meta">
@@ -498,17 +518,10 @@
       </div>
       <div class="rcard-players">
         {% set sorted_players = entry.breakdown.items()|sort(attribute='1', reverse=True) %}
-        {% set best = best_picks.get(entry.name) %}
         {% for player, pts in sorted_players %}
         <div class="rp-row">
           <div class="rp-name">
-            {{ player }}{{ tourn_badge(player) }}
-            {% if best and best.player == player %}
-              <span class="tourn-badge" style="margin-left:0.3rem">
-                <span style="color:var(--gold);font-size:0.65rem">⭐</span>
-                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Rd {{ best.round }} pick · {{ "{:.1f}".format(best.ratio) }}x round median ({{ "{:,}".format(best.round_median) }} pts)</span>
-              </span>
-            {% endif %}
+            {{ player }}{{ tourn_badge(player) }}{{ best_badge(entry.name, player) }}{{ worst_badge(entry.name, player) }}
           </div>
           <div class="rp-bar-wrap">
             <div class="rp-bar"
@@ -602,19 +615,12 @@
         </div>
       </div>
       <div class="rcard-players">
-        {% set best = best_picks.get(participant) %}
         {% for pick in draft_order if pick.owner == participant %}
         {% set pts = entry.breakdown[pick.player] if entry else 0 %}
         <div class="rp-row with-pick">
           <div class="rp-pick">{{ pick.overall_pick }}</div>
           <div class="rp-name">
-            {{ pick.player }}{{ tourn_badge(pick.player) }}
-            {% if best and best.player == pick.player %}
-              <span class="tourn-badge" style="margin-left:0.3rem">
-                <span style="color:var(--gold);font-size:0.65rem">⭐</span>
-                <span class="tip" style="border-color:var(--gold);color:var(--gold)">Best value — Rd {{ best.round }} pick · {{ "{:.1f}".format(best.ratio) }}x round median ({{ "{:,}".format(best.round_median) }} pts)</span>
-              </span>
-            {% endif %}
+            {{ pick.player }}{{ tourn_badge(pick.player) }}{{ best_badge(participant, pick.player) }}{{ worst_badge(participant, pick.player) }}
           </div>
           <div class="rp-bar-wrap">
             <div class="rp-bar" style="width:{{ [(pts / max_pts * 100), 100]|min }}%;background:{{ color }};opacity:0.6;"></div>

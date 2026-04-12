@@ -105,13 +105,11 @@ def best_picks() -> dict:
     d = load()
     pts = d["player_points"]
 
-    # Build round -> list of points for all 4 picks in that round
     round_points = {}
     for pick in DRAFT_ORDER:
         p_pts = pts.get(pick["player"], 0)
         round_points.setdefault(pick["round"], []).append(p_pts)
 
-    # Median per round
     def median(lst):
         s = sorted(lst)
         n = len(s)
@@ -129,6 +127,49 @@ def best_picks() -> dict:
         med = round_median.get(pick["round"], 1) or 1
         ratio = player_pts / med
         if owner not in result or ratio > result[owner]["ratio"] or (ratio == result[owner]["ratio"] and player_pts > result[owner]["points"]):
+            result[owner] = {
+                "player": p,
+                "points": player_pts,
+                "round": pick["round"],
+                "overall_pick": pick["overall_pick"],
+                "ratio": ratio,
+                "round_median": int(med),
+            }
+    return result
+
+
+def worst_picks() -> dict:
+    """
+    Worst pick = lowest ratio of (player points / median points of all players
+    picked in the same round). Only considers players who have actually scored
+    points (skips 0-point players who may not have played yet).
+    Tiebreaker: lower absolute points loses.
+    """
+    d = load()
+    pts = d["player_points"]
+
+    round_points = {}
+    for pick in DRAFT_ORDER:
+        p_pts = pts.get(pick["player"], 0)
+        round_points.setdefault(pick["round"], []).append(p_pts)
+
+    def median(lst):
+        s = sorted(lst)
+        n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+    round_median = {r: median(v) for r, v in round_points.items()}
+
+    result = {}
+    for pick in DRAFT_ORDER:
+        p = pick["player"]
+        owner = pick["owner"]
+        player_pts = pts.get(p, 0)
+        if player_pts == 0:
+            continue
+        med = round_median.get(pick["round"], 1) or 1
+        ratio = player_pts / med
+        if owner not in result or ratio < result[owner]["ratio"] or (ratio == result[owner]["ratio"] and player_pts < result[owner]["points"]):
             result[owner] = {
                 "player": p,
                 "points": player_pts,

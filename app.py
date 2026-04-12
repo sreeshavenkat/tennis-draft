@@ -73,6 +73,7 @@ def index():
         team_history=store.get_team_history(),
         active_tournaments=d.get("active_tournaments", {}),
         best_picks=store.best_picks(),
+        worst_picks=store.worst_picks(),
         player_sparklines=player_sparklines,
         undrafted_atp=d.get("undrafted_atp", []),
         undrafted_wta=d.get("undrafted_wta", []),
