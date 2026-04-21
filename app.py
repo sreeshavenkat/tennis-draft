@@ -44,15 +44,15 @@ def scheduler():
     last_snapshot_date = None
     while True:
         do_scrape()
-        # Take EOD snapshot once per day at/after midnight ET
+        # Take a daily snapshot whenever the date changes — don't wait for 11 PM
+        # since Render may be asleep at that hour
         try:
             import zoneinfo
             et = zoneinfo.ZoneInfo("America/New_York")
-            now_et = datetime.now(et)
+            today = datetime.now(et).strftime("%Y-%m-%d")
         except Exception:
-            now_et = datetime.utcnow()
-        today = now_et.strftime("%Y-%m-%d")
-        if last_snapshot_date != today and now_et.hour >= 23:
+            today = datetime.utcnow().strftime("%Y-%m-%d")
+        if last_snapshot_date != today:
             take_eod_snapshot()
             last_snapshot_date = today
         next_run = datetime.now() + timedelta(hours=1)
