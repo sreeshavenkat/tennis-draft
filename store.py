@@ -182,18 +182,26 @@ def worst_picks() -> dict:
 
 
 def append_team_history(entry: dict):
+    """Upsert one row per calendar day (YTD team totals, not deltas)."""
     d = load()
-    history = d.setdefault("team_history", [])
-    if not history or history[-1]["date"] != entry["date"]:
-        history.append(entry)
-        d["team_history"] = history
-        save(d)
+    by_date = {e["date"]: e for e in d.get("team_history", [])}
+    by_date[entry["date"]] = entry
+    d["team_history"] = sorted(by_date.values(), key=lambda x: x["date"])
+    save(d)
 
 
 def get_team_history() -> list:
     from draft import TEAM_HISTORY
     d = load()
+    try:
+        import zoneinfo
+        today = datetime.now(zoneinfo.ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    except Exception:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
     live = {e["date"]: e for e in d.get("team_history", [])}
     seed = {e["date"]: e for e in TEAM_HISTORY}
-    merged = {**seed, **live}
+    merged = dict(seed)
+    for date, entry in live.items():
+        if date >= today:
+            merged[date] = entry
     return sorted(merged.values(), key=lambda x: x["date"])
