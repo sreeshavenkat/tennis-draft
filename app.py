@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template
 import store
-from draft import DRAFT, DRAFT_ORDER, TEAM_HISTORY
+from draft import DRAFT, DRAFT_ORDER
 from scraper import scrape_race_points
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -19,6 +19,7 @@ def do_scrape():
     logger.info("Scraping Race points for %d players…", len(ALL_PLAYERS))
     pts, active_tournaments, undrafted_atp, undrafted_wta, errors = scrape_race_points(ALL_PLAYERS)
     store.apply_scrape(pts, active_tournaments, undrafted_atp, undrafted_wta, errors)
+    take_eod_snapshot()
     logger.info("Done — updated %d players. Errors: %d", len(pts), len(errors))
     return pts, errors
 
@@ -41,20 +42,8 @@ def take_eod_snapshot():
 
 def scheduler():
     time.sleep(3)
-    last_snapshot_date = None
     while True:
         do_scrape()
-        # Take a daily snapshot whenever the date changes — don't wait for 11 PM
-        # since Render may be asleep at that hour
-        try:
-            import zoneinfo
-            et = zoneinfo.ZoneInfo("America/New_York")
-            today = datetime.now(et).strftime("%Y-%m-%d")
-        except Exception:
-            today = datetime.utcnow().strftime("%Y-%m-%d")
-        if last_snapshot_date != today:
-            take_eod_snapshot()
-            last_snapshot_date = today
         next_run = datetime.now() + timedelta(hours=1)
         logger.info("Next scrape at %s", next_run.strftime("%Y-%m-%d %H:%M"))
         time.sleep(3600)
