@@ -5,6 +5,15 @@ from draft import DRAFT, DRAFT_ORDER
 
 _FILE = os.path.join(os.path.dirname(__file__), "store.json")
 
+
+def _date_et() -> str:
+    try:
+        import zoneinfo
+        et = zoneinfo.ZoneInfo("America/New_York")
+        return datetime.now(et).strftime("%Y-%m-%d")
+    except Exception:
+        return datetime.utcnow().strftime("%Y-%m-%d")
+
 def _now_et() -> str:
     utc_now = datetime.now(timezone.utc)
     try:
@@ -190,18 +199,50 @@ def append_team_history(entry: dict):
     save(d)
 
 
+def maybe_finalize_team_history_day():
+    """
+    When the ET calendar date advances, record the day that just ended using
+    current race totals (one point per day for the history chart).
+    """
+    today = _date_et()
+    d = load()
+    cursor = d.get("history_cursor_date")
+
+    if cursor is None:
+        d["history_cursor_date"] = today
+        save(d)
+        return
+
+    if cursor >= today:
+        return
+
+    from datetime import date as date_cls
+
+    cursor_d = date_cls.fromisoformat(cursor)
+    today_d = date_cls.fromisoformat(today)
+    if (today_d - cursor_d).days != 1:
+        d["history_cursor_date"] = today
+        save(d)
+        return
+
+    entry = {"date": cursor}
+    for row in leaderboard():
+        entry[row["name"]] = row["total"]
+    append_team_history(entry)
+    d["history_cursor_date"] = today
+    save(d)
+
+
 def get_team_history() -> list:
     from draft import TEAM_HISTORY
     d = load()
-    try:
-        import zoneinfo
-        today = datetime.now(zoneinfo.ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-    except Exception:
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = _date_et()
     live = {e["date"]: e for e in d.get("team_history", [])}
     seed = {e["date"]: e for e in TEAM_HISTORY}
     merged = dict(seed)
     for date, entry in live.items():
         if date >= today:
+            continue
+        if date not in merged:
             merged[date] = entry
     return sorted(merged.values(), key=lambda x: x["date"])
