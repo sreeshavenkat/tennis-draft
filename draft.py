@@ -249,4 +249,6 @@ TEAM_HISTORY = [
     {"date": "2026-07-04", "Elaina": 23772, "Michael": 31551, "Sreesha": 27182, "Jeff": 19894},
     {"date": "2026-07-05", "Elaina": 24102, "Michael": 31971, "Sreesha": 27602, "Jeff": 20204},
     {"date": "2026-07-06", "Elaina": 24492, "Michael": 32351, "Sreesha": 27992, "Jeff": 20404},
+    {"date": "2026-07-07", "Elaina": 24492, "Michael": 32351, "Sreesha": 28382, "Jeff": 20594},
+    {"date": "2026-07-07", "Elaina": 24492, "Michael": 32351, "Sreesha": 28782, "Jeff": 20594}
 ]
