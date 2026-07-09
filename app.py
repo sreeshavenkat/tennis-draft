@@ -19,25 +19,9 @@ def do_scrape():
     logger.info("Scraping Race points for %d players…", len(ALL_PLAYERS))
     pts, active_tournaments, undrafted_atp, undrafted_wta, errors = scrape_race_points(ALL_PLAYERS)
     store.apply_scrape(pts, active_tournaments, undrafted_atp, undrafted_wta, errors)
-    take_eod_snapshot()
+    store.maybe_finalize_team_history_day()
     logger.info("Done — updated %d players. Errors: %d", len(pts), len(errors))
     return pts, errors
-
-
-def take_eod_snapshot():
-    """Save current team totals as an end-of-day history entry."""
-    lb = store.leaderboard()
-    try:
-        import zoneinfo
-        et = zoneinfo.ZoneInfo("America/New_York")
-        date_str = datetime.now(et).strftime("%Y-%m-%d")
-    except Exception:
-        date_str = datetime.utcnow().strftime("%Y-%m-%d")
-    entry = {"date": date_str}
-    for row in lb:
-        entry[row["name"]] = row["total"]
-    store.append_team_history(entry)
-    logger.info("EOD snapshot saved for %s", date_str)
 
 
 def scheduler():
